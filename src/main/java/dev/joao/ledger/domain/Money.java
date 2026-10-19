@@ -14,11 +14,13 @@ public record Money(long minorUnits, Currency currency) {
 
     public Money plus(Money other) {
         requiresSameCurrency(other);
-        return new Money(minorUnits + other.minorUnits, currency);
+        avoidSumOverFlow(other.minorUnits);
+        return new Money(minorUnits + other.minorUnits,currency);
     }
 
     public Money minus (Money other){
         requiresSameCurrency(other);
+       
         return new Money(minorUnits - other.minorUnits,currency);
     }
 
@@ -34,6 +36,10 @@ public record Money(long minorUnits, Currency currency) {
         return this.minorUnits == 0 ;
     }
 
+    public void avoidSumOverFlow(long otherMinorUnit){
+        Math.addExact(this.minorUnits, otherMinorUnit);
+
+    }
     public void requiresSameCurrency(Money other){
         if(!this.currency.equals(other.currency)){
                 throw new CurrencyMismatchException("Cannot add amounts with differnt currencies");

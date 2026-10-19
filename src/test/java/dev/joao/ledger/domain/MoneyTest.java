@@ -51,4 +51,11 @@ class MoneyTest {
         var result = Money.of(1,"EUR").isZero();
         assertThat(result).isEqualTo(false);
     }
+
+    @Test 
+    void plus_throwsArithmeticException() {
+        assertThatThrownBy(() ->
+            Money.of(Long.MAX_VALUE, "EUR").plus(Money.of(250, "EUR"))
+        ).isInstanceOf(ArithmeticException.class);
+    }
 }
