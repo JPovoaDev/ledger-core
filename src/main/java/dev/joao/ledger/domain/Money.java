@@ -22,6 +22,18 @@ public record Money(long minorUnits, Currency currency) {
         return new Money(minorUnits - other.minorUnits,currency);
     }
 
+    public Boolean isPositive(){
+        return this.minorUnits > 0;
+    }
+
+    public Boolean isNegative(){
+        return this.minorUnits < 0;
+    }
+
+    public Boolean isZero(){
+        return this.minorUnits == 0 ;
+    }
+
     public void requiresSameCurrency(Money other){
         if(!this.currency.equals(other.currency)){
                 throw new CurrencyMismatchException("Cannot add amounts with differnt currencies");

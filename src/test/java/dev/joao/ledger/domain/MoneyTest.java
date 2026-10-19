@@ -33,4 +33,22 @@ class MoneyTest {
             Money.of(1_000, "EUR").minus(Money.of(250, "USD"))
         ).isInstanceOf(CurrencyMismatchException.class);
     }
+
+    @Test
+    void validate_isPositive() {
+        var result = Money.of(-1_000,"EUR").isPositive();
+        assertThat(result).isEqualTo(false);
+    }
+
+    @Test
+    void validate_isNegative() {
+       var result = Money.of(-1_000,"EUR").isNegative();
+        assertThat(result).isEqualTo(true);
+    }
+
+    @Test
+    void validate_isZero() {
+        var result = Money.of(1,"EUR").isZero();
+        assertThat(result).isEqualTo(false);
+    }
 }
