@@ -97,5 +97,10 @@ class MoneyTest {
         ).isInstanceOf(CurrencyMismatchException.class);
     }
 
+    @Test 
+    void MoneytoString(){
+        Money money = Money.of(1050,"EUR");
+        assertThat(money.toString()).isEqualTo("10.50 EUR");
+    }
     
 }

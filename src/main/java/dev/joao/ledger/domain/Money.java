@@ -1,5 +1,6 @@
 package dev.joao.ledger.domain;
 
+import java.math.BigDecimal;
 import java.util.Currency;
 import java.util.Objects;
 
@@ -51,6 +52,15 @@ public record Money (long minorUnits, Currency currency) implements Comparable<M
     
     public long avoidSubOverFlow(long otherMinorUnit){
         return Math.subtractExact(this.minorUnits, otherMinorUnit);
+    }
+
+    @Override 
+    public String toString (){
+        int decimals = this.currency.getDefaultFractionDigits();
+        BigDecimal amount = BigDecimal.valueOf(this.minorUnits);
+        BigDecimal result = amount.movePointLeft(decimals);
+        return result + " " + this.currency;
+
     }
 
     public void requiresSameCurrency(Money other){
