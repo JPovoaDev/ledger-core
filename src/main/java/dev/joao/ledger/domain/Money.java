@@ -4,10 +4,14 @@ import java.math.BigDecimal;
 import java.util.Currency;
 import java.util.Objects;
 
-public record Money (long minorUnits, Currency currency) implements Comparable<Money>{
+public record Money(long minorUnits, Currency currency) implements Comparable<Money> {
 
     public Money {
         Objects.requireNonNull(currency, "currency");
+        // um exemplo se a currency for XXX da -1 ent fazemos este teste para dar uma exception
+        if (currency.getDefaultFractionDigits() < 0) {
+            throw new IllegalArgumentException("Unsupported currency: " + currency);
+        }
     }
 
     public static Money of(long minorUnits, String currencyCode) {
@@ -15,47 +19,47 @@ public record Money (long minorUnits, Currency currency) implements Comparable<M
     }
 
     public Money plus(Money other) {
-        requiresSameCurrency(other);
+        requireSameCurrency(other);
         long result = avoidSumOverFlow(other.minorUnits);
 
-        return new Money(result,currency);
+        return new Money(result, currency);
     }
 
-    public Money minus (Money other){
-        requiresSameCurrency(other);
+    public Money minus(Money other) {
+        requireSameCurrency(other);
         long result = avoidSubOverFlow(other.minorUnits);
 
-        return new Money(result,currency);
+        return new Money(result, currency);
     }
 
-    public Boolean isPositive(){
+    public boolean isPositive() {
         return this.minorUnits > 0;
     }
 
-    public Boolean isNegative(){
+    public boolean isNegative() {
         return this.minorUnits < 0;
     }
 
-    public Boolean isZero(){
-        return this.minorUnits == 0 ;
-    }
-    
-    @Override 
-    public int compareTo(Money other){
-        requiresSameCurrency(other);
-        return (this.minorUnits > other.minorUnits) ? 1 : ((this.minorUnits < other.minorUnits) ? -1 :0);
+    public boolean isZero() {
+        return this.minorUnits == 0;
     }
 
-    public long avoidSumOverFlow(long otherMinorUnit){
+    @Override
+    public int compareTo(Money other) {
+        requireSameCurrency(other);
+        return (this.minorUnits > other.minorUnits) ? 1 : ((this.minorUnits < other.minorUnits) ? -1 : 0);
+    }
+
+    public long avoidSumOverFlow(long otherMinorUnit) {
         return Math.addExact(this.minorUnits, otherMinorUnit);
-    } 
-    
-    public long avoidSubOverFlow(long otherMinorUnit){
+    }
+
+    public long avoidSubOverFlow(long otherMinorUnit) {
         return Math.subtractExact(this.minorUnits, otherMinorUnit);
     }
 
-    @Override 
-    public String toString (){
+    @Override
+    public String toString() {
         int decimals = this.currency.getDefaultFractionDigits();
         BigDecimal amount = BigDecimal.valueOf(this.minorUnits);
         BigDecimal result = amount.movePointLeft(decimals);
@@ -63,9 +67,9 @@ public record Money (long minorUnits, Currency currency) implements Comparable<M
 
     }
 
-    public void requiresSameCurrency(Money other){
-        if(!this.currency.equals(other.currency)){
-                throw new CurrencyMismatchException("Cannot add amounts with differnt currencies");
-            }
+    public void requireSameCurrency(Money other) {
+        if (!this.currency.equals(other.currency)) {
+            throw new CurrencyMismatchException("Cannot add amounts with differnt currencies");
+        }
     }
 }
