@@ -1,6 +1,8 @@
 package dev.joao.ledger.domain;
+
 import java.time.Instant;
 import java.util.List;
+import java.util.Objects;
 import java.util.UUID;
 
 public record Transfer(
@@ -13,49 +15,47 @@ public record Transfer(
         Money amount,
         TransferStatus status,
         String failureReason,
-        Instant createdAt
-) {
+        Instant createdAt) {
+
     public Transfer {
-        if (id == null) {
-            throw new IllegalArgumentException("id cannot be null");
-        }
-        if (clientId == null || clientId.isBlank()) {
-            throw new IllegalArgumentException("clientId cannot be blank");
-        }
-        if (idempotencyKey == null || idempotencyKey.isBlank()) {
-            throw new IllegalArgumentException("idempotencyKey cannot be blank");
-        }
-        if (requestHash == null || requestHash.isBlank()) {
-            throw new IllegalArgumentException("requestHash cannot be blank");
-        }
-        if (sourceAccountId == null) {
-            throw new IllegalArgumentException("sourceAccountId cannot be null");
-        }
-        if (destAccountId == null) {
-            throw new IllegalArgumentException("destAccountId cannot be null");
-        }
+        Objects.requireNonNull(id);
+        Objects.requireNonNull(clientId);
+        Objects.requireNonNull(idempotencyKey);
+        Objects.requireNonNull(requestHash);
+        Objects.requireNonNull(sourceAccountId);
+        Objects.requireNonNull(destAccountId);
+        Objects.requireNonNull(amount);
+        Objects.requireNonNull(status);
+        Objects.requireNonNull(createdAt);
+
+        requireNotBlank(clientId, "clientId");
+        requireNotBlank(idempotencyKey, "idempotencyKey");
+        requireNotBlank(requestHash, "requestHash");
+
         if (sourceAccountId.equals(destAccountId)) {
-            throw new IllegalArgumentException(
-                    "Source and destination accounts must be different"
-            );
+            throw new InvalidTransferException("Source and destination accounts must be different");
         }
-        if (amount == null) {
-            throw new IllegalArgumentException("amount cannot be null");
-        }
-        if (amount.minorUnits() <= 0) {
-            throw new InvalidAmountException("Amount must be positive");
-        }
-        if (status == null) {
-            throw new IllegalArgumentException("status cannot be null");
-        }
-        if (createdAt == null) {
-            throw new IllegalArgumentException("createdAt cannot be null");
+
+        if (!amount.isPositive()) {
+            throw new InvalidAmountException("Transfer amount must be positive");
         }
     }
-     public List<LedgerEntry> toEntries (UUID debitEntryId,UUID creditEntryId,Instant now) {
-        LedgerEntry debit = new LedgerEntry (debitEntryId,id,sourceAccountId,Direction.DEBIT,amount,now);
 
-        LedgerEntry credit = new LedgerEntry (creditEntryId,id,destAccountId,Direction.CREDIT,amount,now);
+    private static void requireNotBlank(String value, String name) {
+        if (value.isBlank()) {
+            throw new InvalidTransferException(name + " must not be blank");
+        }
+    }
+
+    public List<LedgerEntry> toEntries(UUID debitEntryId, UUID creditEntryId, Instant now) {
+
+        if (status == TransferStatus.FAILED) {
+            throw new InvalidTransferException("A failed transfer cannot generate ledger entries");
+        }
+
+        LedgerEntry debit = new LedgerEntry(debitEntryId, id, sourceAccountId, Direction.DEBIT, amount, now);
+
+        LedgerEntry credit = new LedgerEntry(creditEntryId, id, destAccountId, Direction.CREDIT, amount, now);
 
         return List.of(debit, credit);
     }

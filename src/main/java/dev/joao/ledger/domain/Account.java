@@ -22,6 +22,10 @@ public record Account(
         Objects.requireNonNull(status);
         Objects.requireNonNull(balance);
         Objects.requireNonNull(createdAt);
+
+        if (kind == AccountKind.USER && balance.isNegative()) {
+            throw new IllegalArgumentException("A USER account cannot have a negative balance");
+        }
     }
 
     public static Account open(UUID id, String ownerRef, Currency currency, Instant now) {
@@ -29,35 +33,37 @@ public record Account(
     }
 
     public Account credit(Money amount) {
-        if (status != AccountStatus.ACTIVE) {
-            throw new AccountNotActiveException("Account not active");
-        }
-        if (amount.minorUnits() <= 0) {
-            throw new InvalidAmountException("Amount must be positive");
-        }
-        if (amount.currency() != balance().currency()) {
-            throw new CurrencyMismatchException("Currency does not match account balance currecy");
-        }
+        requireActive();
+        requirePositive(amount);
 
-        return new Account(id, ownerRef, kind, status, balance().plus(amount), createdAt);
+        return withBalance(balance().plus(amount));
     }
 
     public Account debit(Money amount) {
+        requireActive();
+        requirePositive(amount);
+        Money newAmount = balance().minus(amount);
+
+        if (kind == AccountKind.USER && newAmount.isNegative()) {
+            throw new InsufficientFundsException("Insufficient funds");
+        }
+
+        return withBalance(newAmount);
+    }
+
+    private Account withBalance(Money balance) {
+        return new Account(id, ownerRef, kind, status, balance, createdAt);
+    }
+
+    private void requireActive() {
         if (status != AccountStatus.ACTIVE) {
             throw new AccountNotActiveException("Account not active");
         }
-        if (amount.minorUnits() <= 0) {
+    }
+
+    private void requirePositive(Money amount) {
+        if (!amount.isPositive()) {
             throw new InvalidAmountException("Amount must be positive");
         }
-        if (!amount.currency().equals(balance.currency())) {
-            throw new CurrencyMismatchException("Currency does not match account balance currecy");
-        }
-
-        Money newAmount = balance().minus(amount);
-
-        if (newAmount.minorUnits() < 0 && kind != AccountKind.SYSTEM) {
-            throw new InsufficientFundsException("Insufficient founds");
-        }
-        return new Account(id, ownerRef, kind, status, newAmount, createdAt);
     }
 }

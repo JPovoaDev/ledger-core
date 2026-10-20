@@ -28,8 +28,8 @@ public record Money(long minorUnits, Currency currency) implements Comparable<Mo
     public Money minus(Money other) {
         requireSameCurrency(other);
         long result = avoidSubOverFlow(other.minorUnits);
-
         return new Money(result, currency);
+
     }
 
     public boolean isPositive() {
@@ -47,14 +47,14 @@ public record Money(long minorUnits, Currency currency) implements Comparable<Mo
     @Override
     public int compareTo(Money other) {
         requireSameCurrency(other);
-        return (this.minorUnits > other.minorUnits) ? 1 : ((this.minorUnits < other.minorUnits) ? -1 : 0);
+        return Long.compare(minorUnits, other.minorUnits);
     }
 
-    public long avoidSumOverFlow(long otherMinorUnit) {
+    private long avoidSumOverFlow(long otherMinorUnit) {
         return Math.addExact(this.minorUnits, otherMinorUnit);
     }
 
-    public long avoidSubOverFlow(long otherMinorUnit) {
+    private long avoidSubOverFlow(long otherMinorUnit) {
         return Math.subtractExact(this.minorUnits, otherMinorUnit);
     }
 
@@ -67,9 +67,9 @@ public record Money(long minorUnits, Currency currency) implements Comparable<Mo
 
     }
 
-    public void requireSameCurrency(Money other) {
+    private void requireSameCurrency(Money other) {
         if (!this.currency.equals(other.currency)) {
-            throw new CurrencyMismatchException("Cannot add amounts with differnt currencies");
+           throw new CurrencyMismatchException(currency, other.currency);
         }
     }
 }
