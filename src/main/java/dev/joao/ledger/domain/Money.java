@@ -8,7 +8,7 @@ public record Money(long minorUnits, Currency currency) implements Comparable<Mo
 
     public Money {
         Objects.requireNonNull(currency, "currency");
-        // um exemplo se a currency for XXX da -1 ent fazemos este teste para dar uma exception
+        /// Pseudo-currencies (XXX, XAU, ...) report -1 fraction digits: they have no minor units
         if (currency.getDefaultFractionDigits() < 0) {
             throw new IllegalArgumentException("Unsupported currency: " + currency);
         }
